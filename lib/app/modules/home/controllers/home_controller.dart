@@ -1,28 +1,44 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kktest/app/data/models/userdata.dart';
+import 'package:kktest/app/modules/home/repository/home_repo.dart';
+import 'package:kktest/app/utils/toastmanager.dart';
 
 class HomeController extends GetxController {
-  TextEditingController name = TextEditingController();
+  HomeRepo homeRepo = HomeRepo();
+  RxList<UserData> userdatalist = RxList();
+  int page = 1;
+  RxBool hasLoadMore = RxBool(false);
 
-  // Getx and OBX this use this
-  //RxString txtvalue = ''.obs;
-  Rxn<String?> txtvalue = Rxn<String?>("");
-
-  // Use this GetBuilder
-  String txtvalue1 = '';
-
-  // ignore: unnecessary_overrides
   @override
   void onInit() {
     super.onInit();
+    Future.delayed(
+      Duration.zero,
+      () => getUserData(),
+    );
   }
 
-  void submitValue() {
-    // Getx and OBX this use this
-    txtvalue.value = name.text;
+  getUserData() async {
+    try {
+      page = 1;
+      userdatalist.value = await homeRepo.getUserList(page);
+    } catch (e) {
+      showMessage(e.toString());
+    }
+  }
 
-    // Use this GetBuilder
-    txtvalue1 = name.text;
-    update();
+  loadMore() async {
+    if (!hasLoadMore.value) {
+      try {
+        hasLoadMore.value = true;
+        page++;
+        List<UserData> user = await homeRepo.getUserList(page);
+        userdatalist.addAll(user);
+        userdatalist.refresh();
+      } catch (e) {
+        showMessage(e.toString());
+      }
+      hasLoadMore.value = false;
+    }
   }
 }

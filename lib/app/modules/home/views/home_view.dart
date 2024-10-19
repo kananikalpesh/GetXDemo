@@ -1,7 +1,12 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+
 import 'package:get/get.dart';
-import 'package:getxdemo/app/utils/sizer/sizer.dart';
-import '../../../routes/app_pages.dart';
+import 'package:kktest/app/modules/userdetails/views/userdetails_view.dart';
+import 'package:kktest/app/modules/widgets/userlist_view.dart';
+import 'package:kktest/app/routes/app_pages.dart';
+
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -12,84 +17,96 @@ class HomeView extends GetView<HomeController> {
       appBar: AppBar(
         title: const Text('HomeView'),
         centerTitle: true,
+        actions: [
+          IconButton(
+              onPressed: () {
+                Get.toNamed(Routes.BUILD);
+              },
+              icon: Icon(Icons.restore))
+        ],
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            color: Colors.grey[200],
-            width: 300,
-            child: IntrinsicHeight(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: controller.name,
-                    decoration:
-                        InputDecoration(hintText: "Please_enter_value".tr),
+      body: AnimationLimiter(
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: NotificationListener(
+            onNotification: (ScrollNotification scrollInfo) {
+              if (scrollInfo.metrics.pixels ==
+                  scrollInfo.metrics.maxScrollExtent) {
+                print("kkkkkkkkkkkk");
+                controller.loadMore();
+              }
+              return false;
+            },
+            child: Column(
+              children: [
+                Expanded(
+                  child: Obx(
+                    () => ListView.builder(
+                      itemBuilder: (context, index) {
+                        return AnimationConfiguration.staggeredList(
+                          position: index,
+                          delay: Duration(milliseconds: 375),
+                          duration: const Duration(milliseconds: 700),
+                          child: SlideAnimation(
+                            duration: const Duration(milliseconds: 700),
+                            delay: Duration(milliseconds: 150),
+                            verticalOffset: 50.0,
+                            horizontalOffset: 50,
+                            child: FadeInAnimation(
+                              delay: Duration(milliseconds: 150),
+                              duration: const Duration(milliseconds: 700),
+                              child: AnimatedScale(
+                                scale: 1,
+                                duration: const Duration(milliseconds: 100),
+                                child: OpenContainer(
+                                  transitionType:
+                                      ContainerTransitionType.fadeThrough,
+                                  openElevation: 0,
+                                  closedElevation: 0,
+                                  useRootNavigator: false,
+                                  openShape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(32),
+                                  ),
+                                  closedShape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(32),
+                                  ),
+                                  openColor:
+                                      Theme.of(context).colorScheme.surface,
+                                  transitionDuration: Duration(seconds: 100),
+                                  middleColor:
+                                      Theme.of(context).colorScheme.surface,
+                                  openBuilder: (context, _) =>
+                                      const UserdetailsView(),
+                                  closedColor: Colors.blue,
+                                  closedBuilder: (context, _) => UserListView(
+                                    item: controller.userdatalist[index],
+                                    callback: () {
+                                      Get.toNamed(Routes.USERDETAILS,
+                                          arguments:
+                                              controller.userdatalist[index]);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      // separatorBuilder: (context, index) {
+                      //   return const SizedBox(height: 10);
+                      // },
+                      itemCount: controller.userdatalist.length,
+                    ),
                   ),
-                  const SizedBox(height: 40),
-                  Text(
-                    "OBX_Method".tr,
-                    style: TextStyle(color: Colors.green),
-                  ),
-                  SizedBox(height: 10),
-                  Obx(() => Text(controller.txtvalue.value ?? "")),
-                  const SizedBox(height: 40),
-                  Text(
-                    "GetX_Method".tr,
-                    style: TextStyle(color: Colors.green),
-                  ),
-                  const SizedBox(height: 10),
-                  GetX<HomeController>(
-                    init: HomeController(),
-                    initState: (_) {},
-                    builder: (_) {
-                      return Text(controller.txtvalue.value ?? "");
-                    },
-                  ),
-                  const SizedBox(height: 40),
-                  Text(
-                    "GetBuilder_Method".tr,
-                    style: TextStyle(color: Colors.green),
-                  ),
-                  const SizedBox(height: 10),
-                  GetBuilder<HomeController>(
-                    builder: (controller) {
-                      return Text(controller.txtvalue1);
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        child: const Text('Data Change'),
-                        style: ButtonStyle(
-                          foregroundColor:
-                              MaterialStateProperty.all<Color>(Colors.blue),
-                        ),
-                        onPressed: () {
-                          controller.submitValue();
-                        },
-                      ),
-                      SizedBox(width: 10),
-                      TextButton(
-                        child: const Text('Redirect to second page'),
-                        style: ButtonStyle(
-                          foregroundColor:
-                              MaterialStateProperty.all<Color>(Colors.blue),
-                        ),
-                        onPressed: () {
-                          Get.toNamed(Routes.TWO);
-                        },
-                      ),
-                    ],
-                  )
-                ],
-              ),
+                ),
+                Obx(
+                  () => controller.hasLoadMore.value
+                      ? const Padding(
+                          padding: EdgeInsets.all(5),
+                          child: CircularProgressIndicator())
+                      : const SizedBox(),
+                )
+              ],
             ),
           ),
         ),
